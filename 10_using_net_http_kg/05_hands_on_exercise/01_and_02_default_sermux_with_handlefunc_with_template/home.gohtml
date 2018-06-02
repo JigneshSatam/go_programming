@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang='en'>
+  <head>
+    <meta charset="UTF-8">
+    <title>Home template</title>
+  </head>
+  <body>
+{{  if . }}
+  {{ range $k, $v :=  . }}
+    <ul>
+      <h3> {{$k}} </h3>
+      {{ range $v }}
+        <li> {{ . }} </li>
+      {{ end }}
+    </ul>
+  {{ end }}
+{{ end }}
+  <form action='/?fname=Tood' method="POST">
+    <a href='/'>Home</a>
+    <a href='/dog'>Dog</a>
+    <a href='/me/?fname=Abc'>Me</a>
+    /* <input type="text" name="fname" />
+    <input type="submit" name="submit" value="Send Name" /> */
+  </form>
+  </body>
+</html>
