@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Books</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- <link rel="stylesheet" type="text/css" media="screen" href="main.css" /> -->
+  <!-- <script src="main.js"></script> -->
+</head>
+
+<body>
+  {{if .}}
+  <ol>
+    {{range .}}
+      <li>
+        <a href="/books/{{ .ID }}">{{.Name}}</a>
+        ====>
+        <a href="/books/delete/{{ .ID }}">delete</a>
+      </li>
+    {{end}}
+  </ol>
+  <br>
+  <br>
+  {{else}}
+  <h3>No Books</h3>
+  {{end}}
+  <a href="/books/new">New Book</a>
+</body>
+
+</html>

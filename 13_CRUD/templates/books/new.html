@@ -4,22 +4,23 @@
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-    <title>Book</title>
+    <title>New Book</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- <link rel="stylesheet" type="text/css" media="screen" href="main.css" />
     <script src="main.js"></script> -->
   </head>
   <body>
-    {{if .}}
-      <label>Id: </label>{{.ID}}
-      <br>
-      <br>
-      <label>Name: </label>{{.Name}}
-      {{else}}
-      <h3>No Books</h3>
-      {{end}}
-      <br>
-      <br>
-    <a href="/books">All Books</a>
+    <form action="/books" method="POST">
+      <h4>
+        New Book
+      </h4>
+      <!-- <label>ID</label> -->
+      <!-- <input name='id'/> -->
+      <!-- <br></br> -->
+      <label>Name</label>
+      <input name='name' />
+      <br></br>
+      <input type="submit" value="Create" />
+    </form>
   </body>
 </html>
