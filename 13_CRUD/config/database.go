@@ -3,6 +3,7 @@ package config
 import (
 	"database/sql"
 	"fmt"
+	"io/ioutil"
 	"strings"
 
 	// It is used to have pg driver
@@ -13,19 +14,21 @@ import (
 var DB *sql.DB
 
 const (
-	host     = "localhost"
-	port     = 5432
-	user     = "baldor"
-	password = "baldor123"
-	dbname   = "postgres"
+	host      = "localhost"
+	port      = 5432
+	user      = "baldor"
+	password  = "baldor123"
+	dbname    = "postgres"
+	newdbname = "go_database"
 )
 
 func init() {
 	var err error
-	dbAddr := `host=localhost port=5432 user=baldor password=baldor123 dbname=postgres sslmode=disable`
+	dbAddr := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v sslmode=disable", host, port, user, password, dbname)
 	DB, err = sql.Open("postgres", dbAddr)
 	ParseError(err)
-	res, err := DB.Exec("CREATE DATABASE " + "go_database")
+	defer DB.Close()
+	res, err := DB.Exec("CREATE DATABASE " + newdbname)
 	if res != nil {
 		fmt.Println(res)
 	}
@@ -39,12 +42,22 @@ func init() {
 		}
 	}
 	DB.Close()
-	dbAddr2 := `host=localhost port=5432 user=baldor password=baldor123 dbname=go_database sslmode=disable`
+	dbAddr2 := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v sslmode=disable", host, port, user, password, newdbname)
 	DB, err = sql.Open("postgres", dbAddr2)
 	ParseError(err)
 	if err = DB.Ping(); err != nil {
 		panic(err)
 	}
+
+	dat, err := ioutil.ReadFile("migrations/01_create_table_books")
+	ParseError(err)
+	res, err = DB.Exec(string(dat))
+
+	if err != nil && !strings.Contains(err.Error(), `relation "books" already exists`) {
+		ParseError(err)
+	}
+	// fmt.Print(string(dat))
+
 	fmt.Println("\n==============================================================")
 	fmt.Println("                 You are connected to database                  ")
 	fmt.Println("==============================================================")
