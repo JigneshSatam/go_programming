@@ -18,6 +18,8 @@
       <li>
         <a href="/books/{{ .ID }}">{{.Name}}</a>
         ====>
+        <a href="/books/edit/{{ .ID }}">edit</a>
+        &nbsp;
         <a href="/books/delete/{{ .ID }}">delete</a>
       </li>
     {{end}}

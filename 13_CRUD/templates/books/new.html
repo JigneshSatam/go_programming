@@ -10,17 +10,17 @@
     <script src="main.js"></script> -->
   </head>
   <body>
-    <form action="/books" method="POST">
+     <form action="{{ if . }}/books/update/{{ .ID }}{{ else }}/books/create{{ end }}" method="POST">
       <h4>
-        New Book
+        {{ if . }} Edit {{ else }} New {{ end }} Book
       </h4>
       <!-- <label>ID</label> -->
       <!-- <input name='id'/> -->
       <!-- <br></br> -->
       <label>Name</label>
-      <input name='name' />
+      <input name='name' value="{{ if . }} {{ .Name }} {{ end }}"/>
       <br></br>
-      <input type="submit" value="Create" />
+      <input type="submit" value="{{ if . }} Update {{else}} Create {{ end }}"/>
     </form>
   </body>
 </html>

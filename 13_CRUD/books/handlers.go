@@ -54,6 +54,34 @@ func New(w http.ResponseWriter, r *http.Request) {
 	config.Templates["templates/books"].ExecuteTemplate(w, "new.html", nil)
 }
 
+func Edit(w http.ResponseWriter, r *http.Request) {
+	idStr := strings.TrimPrefix(r.RequestURI, "/books/edit/")
+	id, err := strconv.Atoi(idStr)
+	if err == nil {
+		book, ok := find(id)
+		if ok {
+			config.Templates["templates/books"].ExecuteTemplate(w, "new.html", book)
+			return
+		}
+	}
+	http.NotFound(w, r)
+}
+
+func Update(w http.ResponseWriter, r *http.Request) {
+	idStr := strings.TrimPrefix(r.RequestURI, "/books/update/")
+	id, err := strconv.Atoi(idStr)
+	if err == nil {
+		book, ok := find(id)
+		book.Name = r.FormValue("name")
+		update(book)
+		if ok {
+			config.Templates["templates/books"].ExecuteTemplate(w, "show.html", book)
+			return
+		}
+	}
+	http.NotFound(w, r)
+}
+
 func Delete(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.TrimPrefix(r.RequestURI, "/books/delete/")
 	id, err := strconv.Atoi(idStr)

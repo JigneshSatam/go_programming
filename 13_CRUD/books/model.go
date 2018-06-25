@@ -3,6 +3,8 @@ package books
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
+	"strings"
 
 	"github.com/JigneshSatam/go_programming/13_CRUD/config"
 )
@@ -81,6 +83,24 @@ func create(book Book) sql.Result {
 
 func delete(book Book) sql.Result {
 	res, err := config.DB.Exec("DELETE FROM books where id = $1", book.ID)
+	config.ParseError(err)
+	return res
+}
+
+func update(book Book) sql.Result {
+	var mappingHash map[string]interface{}
+	bookJSON, err := json.Marshal(book)
+	config.ParseError(err)
+	err = json.Unmarshal(bookJSON, &mappingHash)
+	config.ParseError(err)
+	setString := ""
+	for key, value := range mappingHash {
+		setString += fmt.Sprintf("%v='%v', ", key, value)
+	}
+	setString = strings.TrimSuffix(setString, ", ")
+	// setString = strings.ToLower(setString)
+	fmt.Println("setString   ", setString)
+	res, err := config.DB.Exec("UPDATE books SET "+setString+" where id = $1", book.ID)
 	config.ParseError(err)
 	return res
 }
