@@ -6,47 +6,59 @@ import (
 )
 
 func main() {
-	channels := producer()
-	out := solver(channels...)
+	c := producer()
+	parallelProcessesCount := 100
+	arr := make([]chan int, parallelProcessesCount)
+	for i := 1; i <= parallelProcessesCount; i++ {
+		arr[i-1] = fanout(c)
+	}
+	out := fanIn(arr...)
+	y := 0
 	for n := range out {
-		fmt.Println(n)
+		y++
+		fmt.Println(y, "\t", n)
 	}
 }
 
-func producer() []chan int {
-	var arr []chan int
-	// for i := 1; i <= 100000; i++ {
-	for i := 1; i <= 100; i++ {
-		arr = append(arr, subProducer())
-	}
-	// go func() {
-	// }()
-	return arr
-}
-
-func subProducer() chan int {
+func fanout(n chan int) chan int {
 	c := make(chan int)
 	go func() {
-		for j := 1; j <= 65; j++ {
-			c <- j
+		for x := range n {
+			c <- fact(x)
 		}
 		close(c)
 	}()
 	return c
 }
 
-func solver(channels ...chan int) chan int {
+func producer() chan int {
+	c := make(chan int)
+	go func() {
+		// for i := 1; i <= 100000; i++ {
+		for i := 1; i <= 100; i++ {
+			for j := 1; j <= 65; j++ {
+				c <- j
+			}
+		}
+		close(c)
+	}()
+	return c
+}
+
+func fanIn(channels ...chan int) chan int {
 	out := make(chan int)
 	ws := sync.WaitGroup{}
 	ws.Add(len(channels))
-	for _, c := range channels {
-		go func(n chan int) {
-			for x := range n {
-				out <- fact(x)
-			}
-			ws.Done()
-		}(c)
-	}
+	go func() {
+		for _, c := range channels {
+			go func(c chan int) {
+				for x := range c {
+					out <- x
+				}
+				ws.Done()
+			}(c)
+		}
+	}()
 	go func() {
 		ws.Wait()
 		close(out)
