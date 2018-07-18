@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/JigneshSatam/go_programming/13_CRUD/config"
@@ -11,12 +12,14 @@ import (
 
 // Book is book structure in database
 type Book struct {
-	ID   int
-	Name string
+	ID   int    `db:"id"`
+	Name string `db:"name"`
 }
 
 // Books is an array of book structure
-var Books []Book
+type Books []Books
+
+// var Books []Book
 
 func find(id int) (Book, bool) {
 	row := config.DB.QueryRow("SELECT * FROM books where id = $1", id)
@@ -36,6 +39,82 @@ func findByName(name string) (Book, bool) {
 		return book, true
 	}
 	return book, false
+}
+
+func findAll() ([]Book, bool) {
+	// t := reflect.TypeOf(Book{})
+	// t.FieldByName("Name").Tag.Get("db")
+	rows, err := config.DB.Query("SELECT * FROM books order by id")
+	config.ParseError(err)
+	// cols, _ := rows.Columns()
+	// colTypes, _ := rows.ColumnTypes()
+	// fmt.Println("cols ", cols)
+	// fmt.Println("colTypes ", &colTypes[0])
+	// books := make([]Book, 0)
+	// for rows.Next() {
+	// 	bk := Book{}
+	// 	rows.Scan(&bk)
+	// 	books = append(books, bk)
+	// }
+	// return books, true
+	cols, err := rows.Columns() // Remember to check err afterwards
+	// for i, _ := range cols {
+	// 	vals[i] = new(sql.RawBytes)
+	// }
+
+	// fmt.Println(bk.ID)
+	colIndexMapper := make(map[string]int)
+	for i, col := range cols {
+		colIndexMapper[col] = i
+	}
+	// fmt.Println(colIndexMapper)
+	books := make([]Book, 0)
+	vals := make([]interface{}, len(cols), len(cols))
+	for rows.Next() {
+		// valsptr := make([]interface{}, len(cols))
+		for i, _ := range cols {
+			vals[i] = &vals[i]
+		}
+		err = rows.Scan(vals...)
+
+		// val := vals[0].(interface{})
+		// for i, val := range vals {
+		// 	x := val.(interface{})
+		// 	fmt.Printf("%v %v\n", cols[i], x)
+		// }
+		bk := Book{}
+		rv := reflect.ValueOf(&bk).Elem()
+		for i := 0; i < rv.NumField(); i++ {
+			f := rv.Field(i)
+
+			tag := rv.Type().Field(i).Tag.Get("db")
+			index := colIndexMapper[tag]
+			value := vals[index]
+			fmt.Println("New bk ", value.(interface{}))
+
+			if f.CanSet() {
+				switch value.(interface{}).(type) {
+				case int64:
+					x := value.(int64)
+					f.SetInt(x)
+				case string:
+					x := value.(string)
+					f.SetString(x)
+				}
+			}
+			// tg := f.Tag.Get("db")
+			// val := rv
+			// fmt.Printf("FieldTag: %v,  Value: %v", tg, val)
+		}
+		// fmt.Println(books)
+		fmt.Println("Old bk ", bk)
+		books = append(books, bk)
+
+		// Now you can check each element of vals for nil-ness,
+		// and you can use type introspection and type assertions
+		// to fetch the column into a typed variable.
+	}
+	return books, true
 }
 
 func all() ([]Book, bool) {
@@ -99,7 +178,6 @@ func update(book Book) sql.Result {
 	}
 	setString = strings.TrimSuffix(setString, ", ")
 	// setString = strings.ToLower(setString)
-	fmt.Println("setString   ", setString)
 	res, err := config.DB.Exec("UPDATE books SET "+setString+" where id = $1", book.ID)
 	config.ParseError(err)
 	return res
