@@ -28,7 +28,7 @@ func Show(w http.ResponseWriter, r *http.Request) {
 
 // Index is to show all books
 func Index(w http.ResponseWriter, r *http.Request) {
-	books, ok := findAll()
+	books, ok := findAllNew()
 	if ok {
 		config.Templates["templates/books"].ExecuteTemplate(w, "index.html", books)
 		return

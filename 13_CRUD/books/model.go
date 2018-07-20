@@ -41,6 +41,55 @@ func findByName(name string) (Book, bool) {
 	return book, false
 }
 
+func scanTOStruct(row *sql.Rows, strt interface{}) error {
+	// colType, err := row.ColumnTypes()
+	cols, err := row.Columns()
+	if err != nil {
+		return err
+	}
+	colIndexMapper := make(map[string]int)
+	for i, col := range cols {
+		colIndexMapper[col] = i
+	}
+	vals := make([]interface{}, len(cols), len(cols))
+	for i, _ := range cols {
+		vals[i] = &vals[i]
+	}
+	err = row.Scan(vals...)
+	rv := reflect.ValueOf(strt).Elem()
+	for i := 0; i < rv.NumField(); i++ {
+		f := rv.Field(i)
+
+		tag := rv.Type().Field(i).Tag.Get("db")
+		index := colIndexMapper[tag]
+		value := vals[index]
+
+		if f.CanSet() {
+			switch value.(interface{}).(type) {
+			case int64:
+				x := value.(int64)
+				f.SetInt(x)
+			case string:
+				x := value.(string)
+				f.SetString(x)
+			}
+		}
+	}
+	return nil
+}
+
+func findAllNew() ([]Book, bool) {
+	rows, err := config.DB.Query("SELECT * FROM books order by id")
+	config.ParseError(err)
+	bks := make([]Book, 0)
+	for rows.Next() {
+		bk := Book{}
+		scanTOStruct(rows, &bk)
+		bks = append(bks, bk)
+	}
+	return bks, true
+}
+
 func findAll() ([]Book, bool) {
 	// t := reflect.TypeOf(Book{})
 	// t.FieldByName("Name").Tag.Get("db")
