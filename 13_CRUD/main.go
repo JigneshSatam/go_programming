@@ -15,5 +15,6 @@ func main() {
 	http.HandleFunc("/books/edit/", books.Edit)
 	http.HandleFunc("/books/update/", books.Update)
 	http.HandleFunc(`/books/delete/`, books.Delete)
+	http.HandleFunc("/favicon.ico", http.NotFound)
 	http.ListenAndServe(":3000", nil)
 }

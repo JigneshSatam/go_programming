@@ -6,14 +6,18 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/JigneshSatam/go_programming/13_CRUD/config"
 )
 
 // Book is book structure in database
 type Book struct {
-	ID   int    `db:"id"`
-	Name string `db:"name"`
+	ID      int       `db:"id"`
+	Name    string    `db:"name"`
+	Release time.Time `db:"release_date"`
+	Authors []string  `db:"authors"`
+	Numbers []int64   `db:"numbers"`
 }
 
 // Books is an array of book structure
@@ -22,60 +26,29 @@ type Books []Books
 // var Books []Book
 
 func find(id int) (Book, bool) {
-	row := config.DB.QueryRow("SELECT * FROM books where id = $1", id)
+	rows, err := config.DB.Query("SELECT * FROM books where id = $1 limit 1", id)
+	config.ParseError(err)
 	book := Book{}
-	err := row.Scan(&book.ID, &book.Name)
-	if err == nil {
-		return book, true
+	for rows.Next() {
+		// auth := pq.Array(&book.Authors)
+		// time := pq.NullTime{Time: book.Release, Valid: false}
+		// err := rows.Scan(&book.ID, &book.Name, &time, auth)
+		err := config.ScanToStruct(rows, &book)
+		fmt.Println("Book ==> ", book)
+		config.ParseError(err)
 	}
-	return book, false
+	return book, true
 }
 
 func findByName(name string) (Book, bool) {
-	row := config.DB.QueryRow("SELECT * FROM books where name = $1", name)
+	rows, err := config.DB.Query("SELECT * FROM books where name = $1 limit 1", name)
+	config.ParseError(err)
 	book := Book{}
-	err := row.Scan(&book.ID, &book.Name)
-	if err == nil {
-		return book, true
+	for rows.Next() {
+		err := config.ScanToStruct(rows, &book)
+		config.ParseError(err)
 	}
-	return book, false
-}
-
-func scanTOStruct(row *sql.Rows, strt interface{}) error {
-	// colType, err := row.ColumnTypes()
-	cols, err := row.Columns()
-	if err != nil {
-		return err
-	}
-	colIndexMapper := make(map[string]int)
-	for i, col := range cols {
-		colIndexMapper[col] = i
-	}
-	vals := make([]interface{}, len(cols), len(cols))
-	for i, _ := range cols {
-		vals[i] = &vals[i]
-	}
-	err = row.Scan(vals...)
-	rv := reflect.ValueOf(strt).Elem()
-	for i := 0; i < rv.NumField(); i++ {
-		f := rv.Field(i)
-
-		tag := rv.Type().Field(i).Tag.Get("db")
-		index := colIndexMapper[tag]
-		value := vals[index]
-
-		if f.CanSet() {
-			switch value.(interface{}).(type) {
-			case int64:
-				x := value.(int64)
-				f.SetInt(x)
-			case string:
-				x := value.(string)
-				f.SetString(x)
-			}
-		}
-	}
-	return nil
+	return book, true
 }
 
 func findAllNew() ([]Book, bool) {
@@ -84,7 +57,7 @@ func findAllNew() ([]Book, bool) {
 	bks := make([]Book, 0)
 	for rows.Next() {
 		bk := Book{}
-		scanTOStruct(rows, &bk)
+		config.ScanToStruct(rows, &bk)
 		bks = append(bks, bk)
 	}
 	return bks, true

@@ -1,0 +1,4 @@
+ALTER TABLE books
+ADD COLUMN release_date TIMESTAMP,
+ADD COLUMN authors TEXT[],
+ADD COLUMN numbers int[];
