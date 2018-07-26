@@ -17,7 +17,7 @@ type Book struct {
 	Name    string    `db:"name"`
 	Release time.Time `db:"release_date"`
 	Authors []string  `db:"authors"`
-	Numbers []int64   `db:"numbers"`
+	Numbers []int     `db:"numbers"`
 }
 
 // Books is an array of book structure
