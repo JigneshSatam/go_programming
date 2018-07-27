@@ -144,28 +144,27 @@ func ScanToStruct(row *sql.Rows, strt interface{}) error {
 			case reflect.TypeOf(*new([]string)), reflect.TypeOf(*new([]int64)), reflect.TypeOf(*new([]float64)), reflect.TypeOf(*new([]bool)), reflect.TypeOf(*new([]byte)):
 				pq.Array(f.Addr().Interface()).Scan(value)
 			case reflect.TypeOf(*new([]int)):
-				nintarr := make([]int, 0, 0)
-				bytes := value.([]byte)
-				if bytes[0] == '{' && bytes[len(bytes)-1] == '}' {
-					stByte := 1
-					edByte := 1
-					for i := 1; i < len(bytes); i++ {
-						if bytes[i] == ',' {
-							newVal, err := strconv.Atoi(string(bytes[stByte:edByte]))
-							ParseError(err)
-							nintarr = append(nintarr, newVal)
-							stByte = i + 1
-							edByte = i + 1
-						} else if bytes[i] == '}' {
-							newVal, err := strconv.Atoi(string(bytes[stByte:edByte]))
-							ParseError(err)
-							nintarr = append(nintarr, newVal)
-						} else {
-							edByte++
-						}
+				arrByteArr := pqArrayToArray(value.([]byte))
+				intArr := make([]int, len(arrByteArr), len(arrByteArr))
+				for i, byteArr := range arrByteArr {
+					if intVal, err := strconv.Atoi(string(byteArr)); err == nil {
+						intArr[i] = intVal
+					} else {
+						ParseError(err)
 					}
 				}
-				f.Set(reflect.ValueOf(nintarr).Convert(fType.Type))
+				f.Set(reflect.ValueOf(intArr).Convert(fType.Type))
+			case reflect.TypeOf(*new([]float32)):
+				arrByteArr := pqArrayToArray(value.([]byte))
+				intArr := make([]float32, len(arrByteArr), len(arrByteArr))
+				for i, byteArr := range arrByteArr {
+					if intVal, err := strconv.ParseFloat(string(byteArr), 32); err == nil {
+						intArr[i] = float32(intVal)
+					} else {
+						ParseError(err)
+					}
+				}
+				f.Set(reflect.ValueOf(intArr).Convert(fType.Type))
 			default:
 
 			}
@@ -217,4 +216,22 @@ func ScanToStruct(row *sql.Rows, strt interface{}) error {
 	// 		f.Set(val.Convert(fieldType))
 	// 	}
 	// }
+}
+
+func pqArrayToArray(bytes []byte) [][]byte {
+	arr := make([][]byte, 0, 0)
+	if bytes[0] == '{' && bytes[len(bytes)-1] == '}' {
+		stByte := 1
+		edByte := 1
+		for i := 1; i < len(bytes); i++ {
+			if bytes[i] == ',' || bytes[i] == '}' {
+				arr = append(arr, bytes[stByte:edByte])
+				stByte = i + 1
+				edByte = i + 1
+			} else {
+				edByte++
+			}
+		}
+	}
+	return arr
 }
