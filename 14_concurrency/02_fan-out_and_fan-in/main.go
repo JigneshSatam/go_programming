@@ -1,11 +1,17 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
 	"sync"
+	"time"
 )
 
 func main() {
+	stTime := time.Now()
 	c := producer()
 	parallelProcessesCount := 100
 	arr := make([]chan int, parallelProcessesCount)
@@ -18,6 +24,35 @@ func main() {
 		y++
 		fmt.Println(y, "\t", n)
 	}
+	fmt.Println("Final time taken ==> ", time.Since(stTime))
+}
+
+func makeCall() {
+	stTime := time.Now()
+	client := &http.Client{}
+	req, err := http.NewRequest(http.MethodGet, "http://localhost:3000/books/1", nil)
+	if err != nil {
+		log.Panicln(err)
+	}
+	req.SetBasicAuth("ANALYST", "ANALYST")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	fmt.Println("ct ==>", req.Header.Get("Content-Type"))
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Panicln(err)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	var resJson map[string]interface{}
+	x := &resJson
+	err = json.Unmarshal(body, x)
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	fmt.Printf("Response : %v ==> %T\n", resJson["message"], resJson["message"])
+	fmt.Println("Time taken", time.Since(stTime))
 }
 
 func fanout(n chan int) chan int {

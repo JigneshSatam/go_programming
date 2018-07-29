@@ -79,60 +79,19 @@ func init() {
 
 // ScanToStruct updateds the struct with values from db scan method
 func ScanToStruct(row *sql.Rows, strt interface{}) error {
+	fmt.Println("Started ==> ")
+	time.Sleep(10 * time.Second)
+	sTime := time.Now()
 	cols, err := row.Columns()
 	ParseError(err)
 	colIndexMapper := make(map[string]int)
-	// tagNameMapper := make(map[string]string)
 	vals := make([]interface{}, len(cols), len(cols))
 	for i, col := range cols {
 		colIndexMapper[col] = i
 		vals[i] = &vals[i]
 	}
 	rv := reflect.ValueOf(strt).Elem()
-	// strtIndex := make([]int, 0, len(cols))
-	// for i := 0; i < rv.NumField(); i++ {
-	// 	f := rv.Field(i)
-	// 	structField := rv.Type().Field(i)
-	// 	tag := structField.Tag.Get("db")
-	// 	tagNameMapper[tag] = structField.Name
-	// 	if index, ok := colIndexMapper[tag]; ok {
-	// 		switch f.Type().Kind() {
-	// 		case reflect.Slice:
-	// 			switch f.Interface().(type) {
-	// 			case []int:
-	// 				newVal := f.Convert(reflect.SliceOf(reflect.TypeOf(int(0))))
-	// 				f.Set(newVal)
-	// 				fmt.Println("f.Type() ==> ", f.Type())
-	// 				vals[index] = pq.Array(f.Addr().Interface())
-	// 			default:
-	// 				vals[index] = pq.Array(f.Addr().Interface())
-	// 			}
-	// 		case reflect.Struct:
-	// 			switch structField.Type {
-	// 			case reflect.TypeOf(time.Time{}):
-	// 				strtIndex = append(strtIndex, index)
-	// 				vals[index] = &pq.NullTime{Time: f.Interface().(time.Time), Valid: false}
-	// 			}
-	// 		default:
-	// 			vals[index] = f.Addr().Interface()
-	// 		}
-	// 	} else {
-	// 		fmt.Println("Tag not found ==> ", tag)
-	// 	}
-	// }
 	err = row.Scan(vals...)
-	// for _, ind := range strtIndex {
-	// 	switch vals[ind].(type) {
-	// 	case *pq.NullTime:
-	// 		y := vals[ind].(*pq.NullTime)
-	// 		if y.Valid {
-	// 			val := reflect.ValueOf(y.Time)
-	// 			f := rv.FieldByName(tagNameMapper[cols[ind]])
-	// 			f.Set(val)
-	// 		}
-	// 	}
-	// }
-
 	for i := 0; i < rv.NumField(); i++ {
 		f := rv.Field(i)
 		fType := rv.Type().Field(i)
@@ -182,40 +141,9 @@ func ScanToStruct(row *sql.Rows, strt interface{}) error {
 		}
 	}
 	ParseError(err)
+	fmt.Println("Time Taken ==> ", time.Since(sTime))
 	fmt.Printf("%T ==> %v\n", strt, strt)
 	return nil
-
-	// value := vals[index]
-	// if f.CanSet() {
-	// 	// val := reflect.ValueOf(value)
-	// 	fieldType := f.Type()
-	// 	if i == 2 {
-	// 		// o := reflect.TypeOf(val)
-	// 		// r := f.Type()
-
-	// 		// x := interface{}
-	// 		// x := unsafe.Pointer(2)
-	// 		a := new([]string)
-	// 		b := *a
-	// 		// b := (*([]string))
-	// 		// fmt.Printf("F ptr %v ==> %v\n", f.Type(), f.Addr().Pointer())
-	// 		// b := new([]string)
-	// 		// x := make([]interface{}, 1)
-	// 		// x[0] =
-	// 		// y := (new(interface{}))
-	// 		fmt.Printf("F Type %T ==> %v\n", string(value.([]uint8)), string(value.([]uint8)))
-	//	  // pq.Array(&b).Scan(value)
-	// 		// x, err := fmt.Sscan(",", &b)
-	// 		// ParseError(err)
-	// 		// fmt.Println(x)
-	// 		// val := reflect.ValueOf(*y)
-	// 		val := reflect.ValueOf(b)
-	// 		f.Set(val.Convert(fieldType))
-	// 	} else {
-	// 		val := reflect.ValueOf(value)
-	// 		f.Set(val.Convert(fieldType))
-	// 	}
-	// }
 }
 
 func pqArrayToArray(bytes []byte) [][]byte {
