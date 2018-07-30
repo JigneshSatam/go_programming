@@ -17,7 +17,7 @@ func Show(w http.ResponseWriter, r *http.Request) {
 		if ok {
 			// js, err := json.Marshal(book)
 			// if err != nil {
-			// log.Panicln(err)
+			// 	log.Panicln(err)
 			// }
 			// w.Write(js)
 			config.Templates["templates/books"].ExecuteTemplate(w, "show.html", book)

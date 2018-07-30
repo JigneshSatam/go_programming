@@ -80,7 +80,6 @@ func init() {
 // ScanToStruct updateds the struct with values from db scan method
 func ScanToStruct(row *sql.Rows, strt interface{}) error {
 	fmt.Println("Started ==> ")
-	time.Sleep(10 * time.Second)
 	sTime := time.Now()
 	cols, err := row.Columns()
 	ParseError(err)
@@ -97,6 +96,10 @@ func ScanToStruct(row *sql.Rows, strt interface{}) error {
 		fType := rv.Type().Field(i)
 		tag := fType.Tag.Get("db")
 		value := vals[colIndexMapper[tag]]
+		if value == nil {
+			continue
+		}
+		fmt.Println("Value ==> ", value)
 		switch f.Kind() {
 		case reflect.Slice:
 			switch fType.Type {
