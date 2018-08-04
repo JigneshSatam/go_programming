@@ -79,8 +79,8 @@ func init() {
 
 // ScanToStruct updateds the struct with values from db scan method
 func ScanToStruct(row *sql.Rows, strt interface{}) error {
-	fmt.Println("Started ==> ")
-	sTime := time.Now()
+	// fmt.Println("Started ==> ")
+	// sTime := time.Now()
 	cols, err := row.Columns()
 	ParseError(err)
 	colIndexMapper := make(map[string]int)
@@ -99,7 +99,7 @@ func ScanToStruct(row *sql.Rows, strt interface{}) error {
 		if value == nil {
 			continue
 		}
-		fmt.Println("Value ==> ", value)
+		// fmt.Println("Value ==> ", value)
 		switch f.Kind() {
 		case reflect.Slice:
 			switch fType.Type {
@@ -144,8 +144,8 @@ func ScanToStruct(row *sql.Rows, strt interface{}) error {
 		}
 	}
 	ParseError(err)
-	fmt.Println("Time Taken ==> ", time.Since(sTime))
-	fmt.Printf("%T ==> %v\n", strt, strt)
+	// fmt.Println("Time Taken ==> ", time.Since(sTime))
+	// fmt.Printf("%T ==> %v\n", strt, strt)
 	return nil
 }
 

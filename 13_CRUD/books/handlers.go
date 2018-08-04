@@ -11,6 +11,7 @@ import (
 // Show is used to fetch single book
 func Show(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.TrimPrefix(r.RequestURI, "/books/")
+	idStr = strings.TrimSuffix(idStr, "/")
 	id, err := strconv.Atoi(idStr)
 	if err == nil {
 		book, ok := find(id)
@@ -60,7 +61,9 @@ func New(w http.ResponseWriter, r *http.Request) {
 }
 
 func Edit(w http.ResponseWriter, r *http.Request) {
-	idStr := strings.TrimPrefix(r.RequestURI, "/books/edit/")
+	idStr := strings.TrimPrefix(r.RequestURI, "/books/")
+	idStr = strings.Trim(idStr, "/edit/")
+	idStr = strings.TrimSuffix(idStr, "/")
 	id, err := strconv.Atoi(idStr)
 	if err == nil {
 		book, ok := find(id)
@@ -73,7 +76,8 @@ func Edit(w http.ResponseWriter, r *http.Request) {
 }
 
 func Update(w http.ResponseWriter, r *http.Request) {
-	idStr := strings.TrimPrefix(r.RequestURI, "/books/update/")
+	idStr := strings.TrimPrefix(r.RequestURI, "/books/")
+	idStr = strings.TrimSuffix(idStr, "/")
 	id, err := strconv.Atoi(idStr)
 	if err == nil {
 		book, ok := find(id)
@@ -88,7 +92,9 @@ func Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func Delete(w http.ResponseWriter, r *http.Request) {
-	idStr := strings.TrimPrefix(r.RequestURI, "/books/delete/")
+	idStr := strings.TrimPrefix(r.RequestURI, "/books/")
+	idStr = strings.Trim(idStr, "/delete/")
+	idStr = strings.TrimSuffix(idStr, "/")
 	id, err := strconv.Atoi(idStr)
 	if err == nil {
 		book, ok := find(id)

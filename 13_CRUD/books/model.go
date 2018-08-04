@@ -15,9 +15,9 @@ import (
 type Book struct {
 	ID      int       `db:"id"`
 	Name    string    `db:"name"`
-	Release time.Time `db:"release_date"`
-	Authors []string  `db:"authors"`
-	Numbers []int     `db:"numbers"`
+	Release time.Time `db:"release_date" json:"-"`
+	Authors []string  `db:"authors" json:"-"`
+	Numbers []int     `db:"numbers" json:"-"`
 }
 
 // Books is an array of book structure

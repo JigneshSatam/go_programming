@@ -10,7 +10,7 @@
     <script src="main.js"></script> -->
   </head>
   <body>
-     <form action="{{ if . }}/books/update/{{ .ID }}{{ else }}/books/create{{ end }}" method="POST">
+     <form action="{{ if . }}/books/{{ .ID }} {{ else }}/books{{ end }}" method="POST">
       <h4>
         {{ if . }} Edit {{ else }} New {{ end }} Book
       </h4>

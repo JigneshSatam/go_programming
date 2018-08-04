@@ -18,9 +18,9 @@
       <li>
         <a href="/books/{{ .ID }}">{{.Name}}</a>
         ====>
-        <a href="/books/edit/{{ .ID }}">edit</a>
+        <a href="/books/{{ .ID }}/edit">edit</a>
         &nbsp;
-        <a href="/books/delete/{{ .ID }}">delete</a>
+        <a href="/books/{{ .ID }}/delete" data-confirm="Are you sure?">delete</a>
       </li>
     {{end}}
   </ol>
