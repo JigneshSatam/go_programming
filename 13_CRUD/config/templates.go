@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"text/template"
 )
@@ -12,8 +13,12 @@ var Templates = make(map[string]*template.Template)
 // var Template *template.Template
 
 func init() {
-	var mainDir = "templates"
-	setTemp(mainDir, "")
+	var temDir = "templates"
+	tems, _ := ioutil.ReadDir(temDir)
+	if len(tems) == 0 {
+		temDir = "../templates"
+	}
+	setTemp(temDir, "")
 	fmt.Println("\n==============================================================")
 	fmt.Println("                       Templates parsed                         ")
 	fmt.Println("==============================================================")

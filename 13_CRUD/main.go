@@ -1,6 +1,11 @@
 package main
 
-import "github.com/JigneshSatam/go_programming/13_CRUD/routes"
+import (
+	"log"
+	_ "net/http/pprof"
+
+	"github.com/JigneshSatam/go_programming/13_CRUD/routes"
+)
 
 func main() {
 	// http.Handle("/", http.RedirectHandler("/books", http.StatusSeeOther))
@@ -13,5 +18,5 @@ func main() {
 	// http.HandleFunc(`/books/delete/`, books.Delete)
 	// http.HandleFunc("/favicon.ico", http.NotFound)
 	// http.ListenAndServe(":3000", nil)
-	routes.StartServer()
+	log.Println(routes.StartServer())
 }

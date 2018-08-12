@@ -53,15 +53,18 @@ func init() {
 	if err = DB.Ping(); err != nil {
 		panic(err)
 	}
-
-	mig, err := ioutil.ReadDir("migrations")
+	migsDir := "migrations"
+	mig, err := ioutil.ReadDir(migsDir)
+	if len(mig) == 0 {
+		migsDir = "../migrations"
+		mig, err = ioutil.ReadDir(migsDir)
+	}
 	ParseError(err)
 	fmt.Println("\n==============================================================")
 	fmt.Println("                        Running Migrations")
 	for i, m := range mig {
-
 		fmt.Printf("                     %d. %s\n", i+1, m.Name())
-		dat, err := ioutil.ReadFile("migrations/" + m.Name())
+		dat, err := ioutil.ReadFile(migsDir + "/" + m.Name())
 		ParseError(err)
 		res, err = DB.Exec(string(dat))
 	}
@@ -103,18 +106,32 @@ func ScanToStruct(row *sql.Rows, strt interface{}) error {
 		switch f.Kind() {
 		case reflect.Slice:
 			switch fType.Type {
-			case reflect.TypeOf(*new([]string)), reflect.TypeOf(*new([]int64)), reflect.TypeOf(*new([]float64)), reflect.TypeOf(*new([]bool)), reflect.TypeOf(*new([]byte)):
-				pq.Array(f.Addr().Interface()).Scan(value)
-			case reflect.TypeOf(*new([]int)):
+			// case reflect.TypeOf(*new([]int64)), reflect.TypeOf(*new([]float64)), reflect.TypeOf(*new([]bool)), reflect.TypeOf(*new([]byte)):
+			// 	pq.Array(f.Addr().Interface()).Scan(value)
+			case reflect.TypeOf(*new([]string)):
+				arrByteArr := pqArrayToArray(value.([]byte))
+				intArr := make([]string, len(arrByteArr), len(arrByteArr))
+				// arr := reflect.MakeSlice(fType.Type, 0, 0)
+				for i, byteArr := range arrByteArr {
+					// for _, byteArr := range arrByteArr {
+					intArr[i] = string(byteArr)
+				}
+				// f.Set(arr)
+				f.Set(reflect.ValueOf(intArr).Convert(fType.Type))
+			case reflect.TypeOf(*new([]int64)), reflect.TypeOf(*new([]float64)), reflect.TypeOf(*new([]bool)), reflect.TypeOf(*new([]byte)):
 				arrByteArr := pqArrayToArray(value.([]byte))
 				intArr := make([]int, len(arrByteArr), len(arrByteArr))
+				// arr := reflect.MakeSlice(fType.Type, 0, 0)
 				for i, byteArr := range arrByteArr {
+					// for _, byteArr := range arrByteArr {
 					if intVal, err := strconv.Atoi(string(byteArr)); err == nil {
 						intArr[i] = intVal
+						// arr = reflect.Append(arr, reflect.ValueOf(intVal))
 					} else {
 						ParseError(err)
 					}
 				}
+				// f.Set(arr)
 				f.Set(reflect.ValueOf(intArr).Convert(fType.Type))
 			case reflect.TypeOf(*new([]float32)):
 				arrByteArr := pqArrayToArray(value.([]byte))
@@ -145,7 +162,135 @@ func ScanToStruct(row *sql.Rows, strt interface{}) error {
 	}
 	ParseError(err)
 	// fmt.Println("Time Taken ==> ", time.Since(sTime))
-	// fmt.Printf("%T ==> %v\n", strt, strt)
+
+	return nil
+}
+
+// ScanToStructWithRefl is abd
+func ScanToStructWithRefl(row *sql.Rows, strt interface{}) error {
+	// fmt.Println("Started ==> ")
+	// sTime := time.Now()
+	cols, err := row.Columns()
+	ParseError(err)
+	colIndexMapper := make(map[string]int)
+	vals := make([]interface{}, len(cols), len(cols))
+	for i, col := range cols {
+		colIndexMapper[col] = i
+		vals[i] = &vals[i]
+	}
+	rv := reflect.ValueOf(strt).Elem()
+	err = row.Scan(vals...)
+	for i := 0; i < rv.NumField(); i++ {
+		f := rv.Field(i)
+		fType := rv.Type().Field(i)
+		tag := fType.Tag.Get("db")
+		value := vals[colIndexMapper[tag]]
+		if value == nil {
+			continue
+		}
+		// fmt.Println("Value ==> ", value)
+		switch f.Kind() {
+		case reflect.Slice:
+			t := fType.Type
+			arrByteArr := pqArrayToArray(value.([]byte))
+			arr := reflect.MakeSlice(t, 0, 0)
+			for _, byteArr := range arrByteArr {
+				val, err := getValueOfBytes(byteArr, t)
+				ParseError(err)
+				arr = reflect.Append(arr, val)
+			}
+			f.Set(arr)
+		case reflect.Struct:
+			switch fType.Type {
+			case reflect.TypeOf(time.Time{}):
+				nt := pq.NullTime{}
+				nt.Scan(value)
+				if nt.Valid {
+					f.Set(reflect.ValueOf(value).Convert(fType.Type))
+				}
+			}
+		default:
+			f.Set(reflect.ValueOf(value).Convert(fType.Type))
+		}
+	}
+	ParseError(err)
+	// fmt.Println("Time Taken ==> ", time.Since(sTime))
+
+	return nil
+}
+
+// ScanToStructPQLib bacgd ede
+func ScanToStructPQLib(row *sql.Rows, strt interface{}) error {
+	// fmt.Println("Started ==> ")
+	// sTime := time.Now()
+	cols, err := row.Columns()
+	ParseError(err)
+	colIndexMapper := make(map[string]int)
+	vals := make([]interface{}, len(cols), len(cols))
+	for i, col := range cols {
+		colIndexMapper[col] = i
+		vals[i] = &vals[i]
+	}
+	rv := reflect.ValueOf(strt).Elem()
+	err = row.Scan(vals...)
+	for i := 0; i < rv.NumField(); i++ {
+		f := rv.Field(i)
+		fType := rv.Type().Field(i)
+		tag := fType.Tag.Get("db")
+		value := vals[colIndexMapper[tag]]
+		if value == nil {
+			continue
+		}
+		// fmt.Println("Value ==> ", value)
+		switch f.Kind() {
+		case reflect.Slice:
+			switch fType.Type {
+			case reflect.TypeOf(*new([]string)), reflect.TypeOf(*new([]int64)), reflect.TypeOf(*new([]float64)), reflect.TypeOf(*new([]bool)), reflect.TypeOf(*new([]byte)):
+				pq.Array(f.Addr().Interface()).Scan(value)
+			// case reflect.TypeOf(*new([]int)):
+			// 	arrByteArr := pqArrayToArray(value.([]byte))
+			// 	// intArr := make([]int, len(arrByteArr), len(arrByteArr))
+			// 	arr := reflect.MakeSlice(fType.Type, 0, 0)
+			// 	for _, byteArr := range arrByteArr {
+			// 		if intVal, err := strconv.Atoi(string(byteArr)); err == nil {
+			// 			// intArr[i] = intVal
+			// 			arr = reflect.Append(arr, reflect.ValueOf(intVal))
+			// 		} else {
+			// 			ParseError(err)
+			// 		}
+			// 	}
+			// 	f.Set(arr)
+			// 	// f.Set(reflect.ValueOf(intArr).Convert(fType.Type))
+			case reflect.TypeOf(*new([]float32)):
+				arrByteArr := pqArrayToArray(value.([]byte))
+				intArr := make([]float32, len(arrByteArr), len(arrByteArr))
+				for i, byteArr := range arrByteArr {
+					if intVal, err := strconv.ParseFloat(string(byteArr), 32); err == nil {
+						intArr[i] = float32(intVal)
+					} else {
+						ParseError(err)
+					}
+				}
+				f.Set(reflect.ValueOf(intArr).Convert(fType.Type))
+			default:
+
+			}
+		case reflect.Struct:
+			switch fType.Type {
+			case reflect.TypeOf(time.Time{}):
+				nt := pq.NullTime{}
+				nt.Scan(value)
+				if nt.Valid {
+					f.Set(reflect.ValueOf(value).Convert(fType.Type))
+				}
+			}
+		default:
+			f.Set(reflect.ValueOf(value).Convert(fType.Type))
+		}
+	}
+	ParseError(err)
+	// fmt.Println("Time Taken ==> ", time.Since(sTime))
+
 	return nil
 }
 
@@ -165,4 +310,30 @@ func pqArrayToArray(bytes []byte) [][]byte {
 		}
 	}
 	return arr
+}
+
+func getValueOfBytes(b []byte, t reflect.Type) (reflect.Value, error) {
+	var v interface{}
+	var err error
+	switch t {
+	case reflect.TypeOf(*new([]string)):
+		v = string(b)
+	case reflect.TypeOf(*new([]int)):
+		v, err = strconv.Atoi(string(b))
+		if err != nil {
+			return reflect.ValueOf(nil), err
+		}
+	case reflect.TypeOf(*new([]int64)):
+		v, err = strconv.Atoi(string(b))
+		v = int64(v.(int))
+		if err != nil {
+			return reflect.ValueOf(nil), err
+		}
+	case reflect.TypeOf(*new([]float32)):
+		v, err = strconv.ParseFloat(string(b), 32)
+		if err != nil {
+			return reflect.ValueOf(nil), err
+		}
+	}
+	return reflect.ValueOf(v), err
 }

@@ -39,9 +39,9 @@ func myfunc(w http.ResponseWriter, r *http.Request) {
 	h(w, r)
 }
 
-func StartServer() {
+func StartServer() error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", myfunc)
 	log.Println("Listening....")
-	http.ListenAndServe(":3000", mux)
+	return http.ListenAndServe(":3000", mux)
 }

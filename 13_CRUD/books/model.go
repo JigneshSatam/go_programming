@@ -15,9 +15,9 @@ import (
 type Book struct {
 	ID      int       `db:"id"`
 	Name    string    `db:"name"`
-	Release time.Time `db:"release_date" json:"-"`
-	Authors []string  `db:"authors" json:"-"`
-	Numbers []int     `db:"numbers" json:"-"`
+	Release time.Time `db:"release_date" json:"release_date"`
+	Authors []string  `db:"authors" json:"authors"`
+	Numbers []int64   `db:"numbers" json:"-"`
 }
 
 // Books is an array of book structure
@@ -33,7 +33,7 @@ func find(id int) (Book, bool) {
 		// auth := pq.Array(&book.Authors)
 		// time := pq.NullTime{Time: book.Release, Valid: false}
 		// err := rows.Scan(&book.ID, &book.Name, &time, auth)
-		err := config.ScanToStruct(rows, &book)
+		err := config.ScanToStructWithRefl(rows, &book)
 		fmt.Println("Book ==> ", book)
 		config.ParseError(err)
 	}
@@ -45,7 +45,7 @@ func findByName(name string) (Book, bool) {
 	config.ParseError(err)
 	book := Book{}
 	for rows.Next() {
-		err := config.ScanToStruct(rows, &book)
+		err := config.ScanToStructWithRefl(rows, &book)
 		config.ParseError(err)
 	}
 	return book, true
@@ -57,7 +57,7 @@ func findAllNew() ([]Book, bool) {
 	bks := make([]Book, 0)
 	for rows.Next() {
 		bk := Book{}
-		config.ScanToStruct(rows, &bk)
+		config.ScanToStructWithRefl(rows, &bk)
 		bks = append(bks, bk)
 	}
 	return bks, true
@@ -194,8 +194,12 @@ func update(book Book) sql.Result {
 	config.ParseError(err)
 	err = json.Unmarshal(bookJSON, &mappingHash)
 	config.ParseError(err)
+	fmt.Println(mappingHash)
 	setString := ""
 	for key, value := range mappingHash {
+		// if key == "authors" {
+		// 	value = "ARRAY" + value.(string)
+		// }
 		setString += fmt.Sprintf("%v='%v', ", key, value)
 	}
 	setString = strings.TrimSuffix(setString, ", ")
