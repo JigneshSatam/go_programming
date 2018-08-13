@@ -17,7 +17,7 @@ type Book struct {
 	Name    string    `db:"name"`
 	Release time.Time `db:"release_date" json:"release_date"`
 	Authors []string  `db:"authors" json:"authors"`
-	Numbers []int64   `db:"numbers" json:"-"`
+	Numbers []int     `db:"numbers" json:"-"`
 }
 
 // Books is an array of book structure
@@ -33,7 +33,7 @@ func find(id int) (Book, bool) {
 		// auth := pq.Array(&book.Authors)
 		// time := pq.NullTime{Time: book.Release, Valid: false}
 		// err := rows.Scan(&book.ID, &book.Name, &time, auth)
-		err := config.ScanToStructWithRefl(rows, &book)
+		err := config.ScanToStruct(rows, &book)
 		fmt.Println("Book ==> ", book)
 		config.ParseError(err)
 	}
@@ -45,7 +45,7 @@ func findByName(name string) (Book, bool) {
 	config.ParseError(err)
 	book := Book{}
 	for rows.Next() {
-		err := config.ScanToStructWithRefl(rows, &book)
+		err := config.ScanToStruct(rows, &book)
 		config.ParseError(err)
 	}
 	return book, true
@@ -57,7 +57,7 @@ func findAllNew() ([]Book, bool) {
 	bks := make([]Book, 0)
 	for rows.Next() {
 		bk := Book{}
-		config.ScanToStructWithRefl(rows, &bk)
+		config.ScanToStruct(rows, &bk)
 		bks = append(bks, bk)
 	}
 	return bks, true

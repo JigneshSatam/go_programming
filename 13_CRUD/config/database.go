@@ -109,16 +109,18 @@ func ScanToStruct(row *sql.Rows, strt interface{}) error {
 			// case reflect.TypeOf(*new([]int64)), reflect.TypeOf(*new([]float64)), reflect.TypeOf(*new([]bool)), reflect.TypeOf(*new([]byte)):
 			// 	pq.Array(f.Addr().Interface()).Scan(value)
 			case reflect.TypeOf(*new([]string)):
-				arrByteArr := pqArrayToArray(value.([]byte))
-				intArr := make([]string, len(arrByteArr), len(arrByteArr))
-				// arr := reflect.MakeSlice(fType.Type, 0, 0)
-				for i, byteArr := range arrByteArr {
-					// for _, byteArr := range arrByteArr {
-					intArr[i] = string(byteArr)
-				}
-				// f.Set(arr)
-				f.Set(reflect.ValueOf(intArr).Convert(fType.Type))
-			case reflect.TypeOf(*new([]int64)), reflect.TypeOf(*new([]float64)), reflect.TypeOf(*new([]bool)), reflect.TypeOf(*new([]byte)):
+				f.Set(reflect.ValueOf(getStringArr(pqArrayToArray(value.([]byte)))).Convert(fType.Type))
+			case reflect.TypeOf(*new([]int64)):
+				f.Set(reflect.ValueOf(getInt64Arr(pqArrayToArray(value.([]byte)))).Convert(fType.Type))
+			case reflect.TypeOf(*new([]int32)):
+				f.Set(reflect.ValueOf(getInt32Arr(pqArrayToArray(value.([]byte)))).Convert(fType.Type))
+			case reflect.TypeOf(*new([]int16)):
+				f.Set(reflect.ValueOf(getInt16Arr(pqArrayToArray(value.([]byte)))).Convert(fType.Type))
+			case reflect.TypeOf(*new([]int8)):
+				f.Set(reflect.ValueOf(getInt8Arr(pqArrayToArray(value.([]byte)))).Convert(fType.Type))
+			case reflect.TypeOf(*new([]int)):
+				f.Set(reflect.ValueOf(getIntArr(pqArrayToArray(value.([]byte)))).Convert(fType.Type))
+			case reflect.TypeOf(*new([]float64)), reflect.TypeOf(*new([]bool)), reflect.TypeOf(*new([]byte)):
 				arrByteArr := pqArrayToArray(value.([]byte))
 				intArr := make([]int, len(arrByteArr), len(arrByteArr))
 				// arr := reflect.MakeSlice(fType.Type, 0, 0)
@@ -336,4 +338,62 @@ func getValueOfBytes(b []byte, t reflect.Type) (reflect.Value, error) {
 		}
 	}
 	return reflect.ValueOf(v), err
+}
+
+func getStringArr(arrByteArr [][]byte) []string {
+	strArr := make([]string, len(arrByteArr), len(arrByteArr))
+	for i, byteArr := range arrByteArr {
+		strArr[i] = string(byteArr)
+	}
+	return strArr
+}
+
+func getIntArr(arrByteArr [][]byte) []int {
+	intArr := make([]int, len(arrByteArr), len(arrByteArr))
+	for i, byteArr := range arrByteArr {
+		if num, err := strconv.Atoi(string(byteArr)); err == nil {
+			intArr[i] = num
+		}
+	}
+	return intArr
+}
+
+func getInt8Arr(arrByteArr [][]byte) []int8 {
+	intArr := make([]int8, len(arrByteArr), len(arrByteArr))
+	for i, byteArr := range arrByteArr {
+		if num, err := strconv.Atoi(string(byteArr)); err == nil {
+			intArr[i] = int8(num)
+		}
+	}
+	return intArr
+}
+
+func getInt16Arr(arrByteArr [][]byte) []int16 {
+	intArr := make([]int16, len(arrByteArr), len(arrByteArr))
+	for i, byteArr := range arrByteArr {
+		if num, err := strconv.Atoi(string(byteArr)); err == nil {
+			intArr[i] = int16(num)
+		}
+	}
+	return intArr
+}
+
+func getInt32Arr(arrByteArr [][]byte) []int32 {
+	intArr := make([]int32, len(arrByteArr), len(arrByteArr))
+	for i, byteArr := range arrByteArr {
+		if num, err := strconv.Atoi(string(byteArr)); err == nil {
+			intArr[i] = int32(num)
+		}
+	}
+	return intArr
+}
+
+func getInt64Arr(arrByteArr [][]byte) []int64 {
+	intArr := make([]int64, len(arrByteArr), len(arrByteArr))
+	for i, byteArr := range arrByteArr {
+		if num, err := strconv.Atoi(string(byteArr)); err == nil {
+			intArr[i] = int64(num)
+		}
+	}
+	return intArr
 }
